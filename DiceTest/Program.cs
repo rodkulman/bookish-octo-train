@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 namespace DiceTest
 {
     public class Program
-    {        enum Options
+    {
+        enum Options
         {
             Higher,
             Lower,
@@ -47,50 +48,60 @@ namespace DiceTest
                 return;
             }
 
-            var rolls = new Dictionary<int, List<int[]>>();
-
-            for (int i = minValue; i <= maxValue; i++)
-            {
-                rolls[i] = new List<int[]>();
-            }
-
-            CalculateRolls(rolls, dice, 0, amount, null);
-
             var chances = 0;
 
             switch (option)
             {
                 case Options.Higher:
-                    chances = rolls.Where(x => x.Key >= target).Sum(x => x.Value.Count);
+                    for (int i = target; i <= maxValue; i++)
+                    {
+                        chances += CalculateChance(dice, i, amount);
+                    }
                     break;
                 case Options.Lower:
-                    chances = rolls.Where(x => x.Key <= target).Sum(x => x.Value.Count);
+                    for (int i = target; i >= minValue; i--)
+                    {
+                        chances += CalculateChance(dice, i, amount);
+                    }
                     break;
                 case Options.Exact:
                 default:
-                    chances = rolls[target].Count;
+                    chances = CalculateChance(dice, target, amount);
                     break;
             }
 
             Console.WriteLine((chances / possibleRollsCount).ToString("P"));
         }
 
-        private static void CalculateRolls(Dictionary<int, List<int[]>> rolls, int dice, int currentDepth, int maxDepth, int[] values)
+        // http://mathforum.org/library/drmath/view/52207.html
+        private static int CalculateChance(int dice, int target, int amount)
         {
-            if (currentDepth == 0) { values = new int[maxDepth]; }
+            var x = (target - amount) / dice;
 
-            if (currentDepth + 1 > maxDepth)
+            var retVal = 0.0;
+
+            for (int k = 0; k <= x; k++)
             {
-                var total = values.Sum();
-                rolls[total].Add(values);
-                return;
+                retVal += Math.Pow(-1, k) * Permutate(amount, k) * Permutate(target - (dice * k) - 1, amount - 1);
             }
 
-            for (int i = 1; i <= dice; i++)
-            {
-                values[currentDepth] = i;
+            return (int)retVal;
+        }
 
-                CalculateRolls(rolls, dice, currentDepth + 1, maxDepth, values);
+        private static double Permutate(int i, int j)
+        {
+            return Factorial(i) / (Factorial(i - j) * Factorial(j));
+        }
+
+        private static double Factorial(double d)
+        {
+            if (d > 1)
+            {
+                return d * Factorial(d - 1);
+            }
+            else
+            {
+                return 1.0;
             }
         }
     }
